@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { SimulateRequest } from "../types";
 
 interface Props {
@@ -91,7 +92,7 @@ export default function Sidebar({ params, onChange, onRun, onExplain, loading }:
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1 text-sm">
       <span className="text-slate-300">{label}</span>
