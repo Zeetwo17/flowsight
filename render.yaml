@@ -1,0 +1,28 @@
+# Render blueprint — deploy the FastAPI backend with one click.
+# Render reads this file and provisions everything declaratively.
+#
+# Steps:
+#   1. Push this repo to GitHub
+#   2. On Render: New > Blueprint > select your repo
+#   3. Render finds this file, builds the Docker image, deploys
+#   4. Set GEMINI_API_KEY in the Render dashboard (or via secrets) — optional
+#
+# Free tier: 750 hours/month. Service sleeps after 15 min idle and
+# wakes on the next request (~30s cold start). Fine for demo traffic.
+
+services:
+  - type: web
+    name: flowsight-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: singapore        # closest to India for the GSC corridor demo
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: GEMINI_API_KEY
+        sync: false          # set in Render dashboard; not committed to repo
+      - key: PYTHONUNBUFFERED
+        value: "1"
+    autoDeploy: true         # redeploy on push to main

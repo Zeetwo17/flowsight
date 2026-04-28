@@ -1,0 +1,52 @@
+# Cloud Build pipeline — build, push, deploy backend to Cloud Run.
+# Trigger on push to main. Substitutions configured in trigger:
+#   _REGION        - e.g. asia-south1
+#   _SERVICE_NAME  - e.g. flowsight-api
+#   _GEMINI_KEY    - secret name in Secret Manager (NOT the value)
+
+substitutions:
+  _REGION: asia-south1
+  _SERVICE_NAME: flowsight-api
+  _GEMINI_KEY: gemini-api-key
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/flowsight/${_SERVICE_NAME}:${SHORT_SHA}
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/flowsight/${_SERVICE_NAME}:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/flowsight/${_SERVICE_NAME}
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE_NAME}
+      - --region=${_REGION}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/flowsight/${_SERVICE_NAME}:${SHORT_SHA}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --memory=1Gi
+      - --cpu=1
+      - --max-instances=10
+      - --timeout=300
+      - --set-secrets=GEMINI_API_KEY=${_GEMINI_KEY}:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/flowsight/${_SERVICE_NAME}:${SHORT_SHA}
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/flowsight/${_SERVICE_NAME}:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY

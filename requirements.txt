@@ -1,0 +1,16 @@
+numpy>=1.24
+scipy>=1.10
+networkx>=3.0
+pandas>=2.0
+matplotlib>=3.7
+hmmlearn>=0.3
+pyyaml>=6.0
+streamlit>=1.30
+pydeck>=0.8
+gymnasium>=0.29
+
+# Optional / advanced — uncomment when needed
+# torch>=2.0
+# stable-baselines3>=2.2
+# osmnx>=1.6
+# google-generativeai>=0.3

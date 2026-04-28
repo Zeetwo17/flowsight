@@ -1,0 +1,388 @@
+TITLE: Hackathon-Ready System Design for Proactive Supply Chain Disruption Detection and Adaptive Routing
+
+---
+
+# 1. Objective
+
+Design a **lightweight, end-to-end prototype** that:
+
+* Detects early signals of supply chain disruptions
+* Models how disruptions **cascade across a network**
+* Recommends **better routing decisions before failures spread**
+
+⚠️ This is **NOT production-grade**.
+Focus on:
+
+* clarity of idea
+* creative modeling
+* strong visual demo
+
+---
+
+# 2. Core Idea (One-Line)
+
+Use **event-based cascade modeling (Hawkes)** + **simple system state interpretation** + **risk-aware routing** to prevent small disruptions from becoming large failures.
+
+---
+
+# 3. System Architecture (Simple Pipeline)
+
+Raw / Simulated Data
+→ Event Stream
+→ Hawkes Process (cascade modeling)
+→ State Estimation (system condition)
+→ Routing Engine (decision making)
+→ Output + Visualization
+
+---
+
+# 4. Component Breakdown
+
+---
+
+## 4.1 Hawkes Process — Disruption Cascade Detector
+
+### Purpose:
+
+Model how one disruption increases the probability of future disruptions nearby.
+
+---
+
+### Input:
+
+Event stream:
+
+* timestamp
+* node/edge
+* event type (delay, congestion)
+
+---
+
+### Model:
+
+Intensity function:
+
+λᵢ(t) = μᵢ + Σⱼ Σ_{tⱼ < t} αᵢⱼ · exp(-β(t - tⱼ))
+
+Where:
+
+* μᵢ → base risk at node i
+* αᵢⱼ → influence of node j on node i
+* β → decay rate
+
+---
+
+### Output:
+
+* Risk score per node over time
+* Indicates **which nodes are about to fail**
+
+---
+
+### Role:
+
+Captures:
+✔ cascading behavior
+✔ temporal dependency
+✔ early warning signals
+
+---
+
+## 4.2 State Estimation — System Awareness Layer
+
+### Purpose:
+
+Convert noisy risk signals into **interpretable system states**
+
+---
+
+### Approach (keep simple):
+
+Option A: Threshold-based
+
+* Low risk → Normal
+* Medium → At Risk
+* High → Congested
+
+Option B (optional): Simple HMM
+
+* Hidden states: Normal, Stressed, Critical
+
+---
+
+### Input:
+
+* Hawkes risk scores
+* optional: travel times / delays
+
+---
+
+### Output:
+
+* State label per node
+* Clean representation for routing
+
+---
+
+### Role:
+
+✔ simplifies decision-making
+✔ improves interpretability for demo
+
+---
+
+## 4.3 Routing Engine — Decision Layer
+
+### Purpose:
+
+Recommend better routes based on **future risk**, not just shortest path
+
+---
+
+### Graph:
+
+* Nodes → locations
+* Edges → routes
+* Weight = travel_time + λ × risk_score
+
+---
+
+### Objective:
+
+Minimize:
+
+Cost(route) = Σ (travel_time + λ · risk)
+
+---
+
+### Algorithm:
+
+* Dijkstra / A* (modified weights)
+
+---
+
+### Output:
+
+* Best route under:
+
+  * normal condition
+  * disruption-aware condition
+
+---
+
+### Role:
+
+✔ converts prediction → action
+✔ shows measurable improvement
+
+---
+
+# 5. Data Strategy (Hybrid Approach)
+
+---
+
+## 5.1 Real Data (Lightweight)
+
+Use a small dataset to define the network:
+
+Options:
+
+* Taxi trips
+* road network
+* simple graph data
+
+Use only for:
+
+* nodes
+* edges
+* base travel time
+
+---
+
+## 5.2 Synthetic Disruptions (CORE)
+
+Manually inject events like:
+
+* congestion at node A
+* delay on edge B
+* temporary node failure
+
+---
+
+### Example:
+
+Time 0:
+
+* Node A congested
+
+Time 5:
+
+* affects Node B
+
+Time 10:
+
+* affects Node C
+
+---
+
+### Purpose:
+
+✔ ensures visible cascade
+✔ makes demo controllable
+
+---
+
+## 5.3 Event Stream Creation
+
+Convert disruptions into:
+
+Event = {
+time,
+node,
+event_type
+}
+
+Used by Hawkes model.
+
+---
+
+# 6. End-to-End Flow
+
+1. Build graph from dataset
+2. Inject disruption events
+3. Convert to event stream
+4. Run Hawkes → get risk scores
+5. Convert risk → state labels
+6. Update graph weights
+7. Run routing algorithm
+8. Compare routes
+
+---
+
+# 7. Demo Scenario (CRITICAL)
+
+---
+
+## Example Story:
+
+* Shipment goes from Node S → Node D
+* Node A suddenly becomes congested
+* Hawkes predicts spread to nearby nodes
+* System:
+
+  * detects rising risk
+  * avoids region
+  * reroutes shipment
+
+---
+
+## Show visually:
+
+* Graph with nodes
+* Red nodes = high risk
+* Original route (fails)
+* New route (avoids disruption)
+
+---
+
+# 8. Minimal Math (Only Essentials)
+
+---
+
+### Hawkes:
+
+λ(t) = μ + Σ α exp(-βΔt)
+
+---
+
+### Routing:
+
+Cost = time + λ × risk
+
+---
+
+# 9. Implementation Blueprint
+
+---
+
+## Modules:
+
+* hawkes.py
+* state.py
+* router.py
+* simulation.py
+* main.py
+
+---
+
+## Suggested Tools:
+
+* Python
+* NumPy
+* NetworkX
+* Matplotlib
+
+(Optional: PyTorch if using learning-based model)
+
+---
+
+# 10. What Makes This Innovative
+
+* Models **cascade-aware routing**, not just shortest path
+* Uses **event propagation (Hawkes)** in supply chain context
+* Connects:
+  prediction → interpretation → action
+
+---
+
+# 11. What NOT to Do
+
+* No large datasets
+* No distributed systems
+* No overfitting models
+* No unnecessary ML complexity
+
+---
+
+# 12. Evaluation (Simple but Effective)
+
+---
+
+Compare:
+
+### Without system:
+
+* shortest path
+* gets delayed
+
+### With system:
+
+* risk-aware path
+* avoids disruption
+
+---
+
+Metrics:
+
+* total delay
+* route cost
+* success rate
+
+---
+
+# 13. Final Deliverable
+
+A working prototype that shows:
+
+✔ disruption occurs
+✔ cascade is predicted
+✔ routing adapts
+✔ outcome improves
+
+---
+
+# 14. One-Line Summary
+
+Predict cascading failures → understand system state → reroute intelligently.
+
+---
