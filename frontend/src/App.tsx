@@ -6,7 +6,7 @@ import RouteCompare from "./components/RouteCompare";
 import EventLog from "./components/EventLog";
 import ExplanationPanel from "./components/ExplanationPanel";
 import Sidebar from "./components/Sidebar";
-import { runSimulation, explainRoute } from "./api";
+import { runSimulation, explainRoute, pingHealth } from "./api";
 import type { SimulateRequest, SimulationDTO, ExplanationDTO } from "./types";
 
 const DEFAULTS: SimulateRequest = {
@@ -18,12 +18,15 @@ const DEFAULTS: SimulateRequest = {
   random_disruptions: true
 };
 
+type WakeStatus = "idle" | "waking" | "ready" | "down";
+
 export default function App() {
   const [params, setParams] = useState<SimulateRequest>(DEFAULTS);
   const [sim, setSim] = useState<SimulationDTO | null>(null);
   const [explanation, setExplanation] = useState<ExplanationDTO | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [wake, setWake] = useState<WakeStatus>("idle");
 
   async function refresh() {
     setLoading(true);
@@ -51,8 +54,34 @@ export default function App() {
     }
   }
 
+  // On mount: probe /health first. If backend is awake, auto-run simulation.
+  // If asleep, just show a "waking up" banner — let the user click Run when ready.
   useEffect(() => {
-    refresh();
+    let cancelled = false;
+    async function bootstrap() {
+      setWake("waking");
+      const t0 = performance.now();
+      // Up to 4 attempts to wake the backend (Render cold start can be 30-90s).
+      for (let i = 0; i < 4; i++) {
+        if (cancelled) return;
+        const ok = await pingHealth();
+        if (ok) {
+          if (cancelled) return;
+          setWake("ready");
+          // Only auto-run if backend was already warm (< 5s probe).
+          if (performance.now() - t0 < 5000) {
+            refresh();
+          }
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 5000));
+      }
+      if (!cancelled) setWake("down");
+    }
+    bootstrap();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -80,6 +109,21 @@ export default function App() {
           {sim && <KPIBar kpi={sim.kpi} />}
         </header>
 
+        {wake === "waking" && !sim && (
+          <div className="bg-amber-900/30 border border-amber-700/60 rounded p-3 text-sm">
+            Waking up backend (Render free tier sleeps after 15 min idle —
+            takes 30–60s to cold-start).
+          </div>
+        )}
+        {wake === "down" && !sim && (
+          <div className="bg-red-900/40 border border-red-700 rounded p-3 text-sm">
+            Backend didn't respond after 4 attempts. It may still be starting up —
+            click <strong>Run simulation</strong> to retry, or open
+            <a className="text-accent ml-1" href="https://flowsight-api-ylyx.onrender.com/health" target="_blank" rel="noreferrer">
+              /health
+            </a> in a new tab.
+          </div>
+        )}
         {error && (
           <div className="bg-red-900/40 border border-red-700 rounded p-3 text-sm">
             {error}

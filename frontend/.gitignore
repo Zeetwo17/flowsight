@@ -4,3 +4,6 @@ dist/
 .vite/
 .env.local
 *.log
+
+.vercel
+.env*.local
