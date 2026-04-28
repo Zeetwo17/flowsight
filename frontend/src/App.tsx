@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import MapView from "./components/MapView";
 import CascadeChart from "./components/CascadeChart";
 import KPIBar from "./components/KPIBar";
@@ -271,7 +272,7 @@ function Banner({
   children
 }: {
   tone: "info" | "warn" | "error";
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const styles = {
     info: "bg-blue-900/30 border-blue-700/50 text-blue-100",
