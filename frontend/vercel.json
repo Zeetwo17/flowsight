@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://flowsight-api.onrender.com/:path*"
+      "destination": "https://flowsight-api-ylyx.onrender.com/:path*"
     },
     {
       "source": "/((?!api).*)",
